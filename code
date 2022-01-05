@@ -1,0 +1,117 @@
+#import findspark
+#findspark.init()
+#from pyspark.sql import SparkSession
+#spark=SparkSession.builder.appName("indmem").getOrCreate()
+#from pyspark.sql.functions import explode, col
+from pyspark.sql.functions import explode, col
+df_eligibility = spark.read.option("multiline", "true").json("eligibility.json")
+df2=df_eligibility.createOrReplaceTempView('eligibility')
+result=spark.sql("select policyNumber, count(policyNumber) from eligibility group by policyNumber")
+#result=spark.sql("select external1.subsAffiliationExternalID.externalIDType from ind" )
+result.toPandas().to_csv("policy_count_0103.csv")
+
+#import findspark
+#findspark.init()
+#from pyspark.sql import SparkSession
+#spark=SparkSession.builder.appName("indmem").getOrCreate()
+#from pyspark.sql.functions import explode, col
+from pyspark.sql.functions import explode, col
+df_indmem = spark.read.option("multiline", "true").json("hcpindmember.json")
+df2=df_indmem.createOrReplaceTempView('indmem')
+result=spark.sql("select policyNumber, count(policyNumber) from indmem group by policyNumber")
+#result=spark.sql("select external1.subsAffiliationExternalID.externalIDType from ind" )
+result.toPandas().to_csv("policy_count_indmem_0103.csv")
+
+#import findspark
+#findspark.init()
+#from pyspark.sql import SparkSession
+#spark=SparkSession.builder.appName("indmem").getOrCreate()
+#from pyspark.sql.functions import explode, col
+from pyspark.sql.functions import explode, col
+df_indmem = spark.read.option("multiline", "true").json("hcpindmember.json")
+df2=df_indmem.createOrReplaceTempView('indmem')
+result=spark.sql("select policyNumber,enrolleeSourceCode, count(policyNumber) from indmem group by policyNumber,enrolleeSourceCode")
+#result=spark.sql("select external1.subsAffiliationExternalID.externalIDType from ind" )
+result.toPandas().to_csv("cs_pr_count_indmem_0103.csv")
+
+#import findspark
+#findspark.init()
+#from pyspark.sql import SparkSession
+#spark=SparkSession.builder.appName("indmem").getOrCreate()
+#from pyspark.sql.functions import explode, col
+from pyspark.sql.functions import explode, col
+df_eligibility = spark.read.option("multiline", "true").json("eligibility.json")
+df2=df_eligibility.createOrReplaceTempView('eligibility')
+result=spark.sql("select policyNumber,enrolleeSourceCode, count(policyNumber) from eligibility group by policyNumber,enrolleeSourceCode")
+#result=spark.sql("select external1.subsAffiliationExternalID.externalIDType from ind" )
+result.toPandas().to_csv("cs_pr_count_0103.csv")
+
+#import findspark
+#findspark.init()
+#from pyspark.sql import SparkSession
+#spark=SparkSession.builder.appName("indmem").getOrCreate()
+#from pyspark.sql.functions import explode, col
+from pyspark.sql.functions import explode, col
+df_eligibility = spark.read.option("multiline", "true").json("eligibility.json")
+df_cob = spark.read.option("multiline", "true").json("hcpcdbcob.json")
+df2=df_eligibility.createOrReplaceTempView('eligibility')
+df3=df_cob.createOrReplaceTempView('cob')
+result=spark.sql("select policyNumber,individualIdentifier from eligibility")
+result1=spark.sql("select a.policyNumber,a.individualIdentifier,b.individualIdentifier from eligibility a join cob b on a.individualIdentifier=b.individualIdentifier")
+result1.toPandas().to_csv("hcpcdbcob_0104.csv")
+
+from pyspark.sql.functions import explode, col
+df_member = spark.read.option("multiline", "true").json("member_0104.json")
+
+dx=df_member.withColumn("policy",df_member["_id.policyId"])
+df2=dx.createOrReplaceTempView('member')
+
+result=spark.sql("select policy,count(*) from member group by policy")
+result.toPandas().to_csv("member_count_0104.csv")
+
+
+from pyspark.sql.functions import explode, col
+df_eligibility = spark.read.option("multiline", "true").json("eligibility.json")
+df_indmem = spark.read.option("multiline", "true").json("hcpindmember.json")
+df1=df_eligibility.createOrReplaceTempView('eligibility')
+df2=df_indmem.createOrReplaceTempView('indmem')
+#result=spark.sql("select a.policyNumber,a.individualIdentifier,b._id from eligibility a left join indmem b on a.individualIdentifier =b._id ")
+result=spark.sql("select a.policyNumber,a.individualIdentifier,b._id from eligibility a left join indmem b on a.individualIdentifier =b._id ")
+result.toPandas()
+#.to_csv("join_indmem_and_eligibility.csv")
+
+
+from pyspark.sql.functions import explode, col
+df_eligibility = spark.read.option("multiline", "true").json("eligibility.json")
+df_indmem = spark.read.option("multiline", "true").json("hcpindmember.json")
+df_dlq = spark.read.option("multiline", "true").json("MemberProdDlqError.json")
+df1=df_eligibility.createOrReplaceTempView('eligibility')
+df2=df_indmem.createOrReplaceTempView('indmem')
+dx=df_dlq.withColumn("individualidentifier",df_dlq["jsonPayload.individualIdentifier"])
+dx1=dx.withColumn("message",dx["response.responseList.responseMessage"])
+df3=dx1.createOrReplaceTempView('dlq')
+#result=spark.sql("select message from dlq ")
+result=spark.sql("select a.policyNumber,a.individualIdentifier,b._id ,c.message from eligibility a left join indmem b on a.individualIdentifier = b._id join dlq c on a.individualIdentifier=c.individualidentifier   ")
+#result=spark.sql("select a.policyNumber,a.individualIdentifier ,c.individualidentifier,c.message from eligibility a  left join dlq c on a.individualIdentifier=c.individualidentifier   ")
+result.toPandas()
+#.to_csv("join_indmem_and_eligibility.csv")
+
+
+
+from pyspark.sql.functions import explode, col
+df_eligibility = spark.read.option("multiline", "true").json("eligibility.json")
+df_indmem = spark.read.option("multiline", "true").json("hcpindmember.json")
+df_dlq = spark.read.option("multiline", "true").json("MemberProdDlqError.json")
+df1=df_eligibility.createOrReplaceTempView('eligibility')
+df2=df_indmem.createOrReplaceTempView('indmem')
+dx=df_dlq.withColumn("individualidentifier",df_dlq["jsonPayload.individualIdentifier"])
+dx1=dx.withColumn("message",dx["response.responseList.responseMessage"])
+df3=dx1.createOrReplaceTempView('dlq')
+#result=spark.sql("select message from dlq ")
+result=spark.sql("select a.policyNumber,a.individualIdentifier,b._id from eligibility a left join indmem b on a.individualIdentifier = b._id    ")
+result1=result.na.fill('blank')
+df4=result1.createOrReplaceTempView('removernull')
+result3=spark.sql("select * from removernull where _id='blank'")
+#result=spark.sql("select a.policyNumber,a.individualIdentifier ,c.individualidentifier,c.message from eligibility a  left join dlq c on a.individualIdentifier=c.individualidentifier   ")
+result3.toPandas()
+#.to_csv("test.csv")
