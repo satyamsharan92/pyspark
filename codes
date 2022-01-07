@@ -1,0 +1,7 @@
+from pymongo import MongoClient
+
+client = MongoClient('mongodb://s163:ByeOptum%4029Jan@dbvrp81603:27017,dbvrp81604:27017,dbvrp81633:27017/?authMechanism=PLAIN&replicaSet=uspalpha01&readPreference=primary&authSource=%24external&appname=MongoDB%20Compass&ssl=false&authSource=$external')
+result = client['migr01-alpha']['hcpcdbProviderSelection'].find()
+
+for i in result:
+    print(i)
